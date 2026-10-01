@@ -103,7 +103,7 @@ export class CoverPreview {
     try {
       const buf: ArrayBuffer = await new Promise((res, rej) => this.api.blob(`/papers/${id}/cover`).subscribe({ next: res, error: rej }));
       const pdfjs = await import('pdfjs-dist');
-      pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+      pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
       const doc = await pdfjs.getDocument({ data: new Uint8Array(buf) }).promise;
       const page = await doc.getPage(1);
       const host = this.stage().nativeElement;

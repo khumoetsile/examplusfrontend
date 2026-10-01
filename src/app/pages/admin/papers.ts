@@ -123,7 +123,7 @@ export class Papers {
   onDrop(e: DragEvent) { e.preventDefault(); this.over.set(false); this.pick(e.dataTransfer?.files); }
   pick(files: FileList | null | undefined) {
     const add = Array.from(files || []).filter((f) => /\.pdf$/i.test(f.name))
-      .map((file): Pending => ({ file, type: file.name.replace(/\.pdf$/i, '').replace(/[_-]+/g, ' ').trim(), state: 'ready' }));
+      .map((file): Pending => ({ file, type: file.name.replace(/\.pdf$/i, '').replace(/[_+-]+/g, ' ').trim(), state: 'ready' }));
     if (!add.length) this.toast.show('Only PDF files can be uploaded.', true);
     this.pending.update((p) => [...p, ...add]);
   }
