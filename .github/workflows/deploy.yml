@@ -1,0 +1,61 @@
+name: Deploy frontend to cPanel
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-frontend
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: site
+          path: dist/frontend/browser
+          retention-days: 7
+
+  deploy:
+    name: Deploy
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: site
+          path: site
+
+      - name: Configure SSH
+        run: |
+          install -m 700 -d ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          echo "${{ secrets.SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+
+      - name: Upload build into the backend's public/ folder
+        run: |
+          SSH="ssh -i ~/.ssh/id_deploy -p ${{ secrets.SSH_PORT || 22 }}"
+          HOST="${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}"
+          # The backend only serves public/ if it existed when it started, so restart once on the very first deploy.
+          FIRST=$($SSH "$HOST" "[ -f '${{ secrets.APP_DIR }}/public/index.html' ] && echo no || echo yes")
+          rsync -az --delete -e "$SSH" site/ "$HOST:${{ secrets.APP_DIR }}/public/"
+          if [ "$FIRST" = "yes" ]; then $SSH "$HOST" "mkdir -p '${{ secrets.APP_DIR }}/tmp' && touch '${{ secrets.APP_DIR }}/tmp/restart.txt'"; fi
+
+      - name: Smoke test
+        if: ${{ vars.SITE_URL != '' }}
+        run: curl --fail --silent --show-error --retry 5 --retry-delay 5 "${{ vars.SITE_URL }}/" > /dev/null

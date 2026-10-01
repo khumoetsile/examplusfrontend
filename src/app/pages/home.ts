@@ -1,0 +1,103 @@
+import { Component, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
+import { Api } from '../api';
+
+@Component({
+  imports: [RouterLink, FormsModule],
+  template: `
+    <section class="hero">
+      <div class="wrap in">
+        <div>
+          <div class="kicker">Botswana past examination papers</div>
+          <h1>Study from the papers you will actually sit.</h1>
+          <p>BGCSE, PSLE and JC past papers, sorted by subject and year. Buy one paper, or open up a whole subject
+            collection and read everything online from your account.</p>
+          <div class="search">
+            <input type="search" placeholder="Search a subject, e.g. Biology" [ngModel]="term()" (ngModelChange)="find($event)" aria-label="Search subjects">
+            @if (results().length) {
+              <ul>@for (r of results(); track r.id) { <li><a [routerLink]="['/subject', r.id]"><b>{{ r.qualification }}</b> {{ r.name }}</a></li> }</ul>
+            } @else if (term().length > 1 && searched()) { <ul><li class="muted" style="padding:10px 14px">No subjects match.</li></ul> }
+          </div>
+          <div class="cta">
+            <a class="btn rust" href="#qualifications">Find your papers</a>
+            @if (!api.user()) { <a class="btn ghost" routerLink="/register">Create an account</a> }
+            @else { <a class="btn ghost" routerLink="/my-papers">My Papers</a> }
+          </div>
+        </div>
+        <div class="sheet" aria-hidden="true">
+          <div class="hd"><span>BGCSE</span><span>2024</span></div>
+          <h4>Biology</h4><div class="sub">Paper 1 · Multiple choice</div>
+          <div class="ln"></div><div class="ln"></div><div class="ln s"></div>
+          <div class="q"><b>1.</b> Which organelle is the site of aerobic respiration?</div>
+          <div class="ln"></div><div class="ln s"></div>
+          <div class="q"><b>2.</b> State two functions of the xylem.</div>
+          <div class="ln"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="qualifications">
+      <div class="wrap">
+        <div class="head"><div class="eyebrow">Start here</div><h2>Choose your qualification</h2></div>
+        <div class="grid q">
+          @for (q of quals(); track q.id) {
+            <a class="card qcard" [class]="'card qcard c-' + q.code" [routerLink]="['/qualification', q.code]">
+              <div class="code">{{ q.code }}</div>
+              <p class="muted" style="margin:8px 0 0">{{ q.description }}</p>
+              <span class="go">{{ q.subject_count }} subjects →</span>
+            </a>
+          }
+        </div>
+        @if (loading()) { <p class="muted">Loading…</p> }
+      </div>
+    </section>
+
+    <section class="section alt">
+      <div class="wrap">
+        <div class="head"><div class="eyebrow">How it works</div><h2>From search to studying in minutes</h2></div>
+        <div class="steps">
+          <div class="step"><h3>Choose</h3><p>Pick BGCSE, PSLE or JC, then your subject.</p></div>
+          <div class="step"><h3>Select access</h3><p>One specific paper, or the complete collection for a subject or qualification.</p></div>
+          <div class="step"><h3>Pay with DPO</h3><p>Your order is confirmed by the payment gateway before access is granted.</p></div>
+          <div class="step"><h3>Read online</h3><p>Open your papers from My Papers whenever you need them. No repeat payment.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap">
+        <div class="head"><div class="eyebrow">Good to know</div><h2>Made for learners, priced for families</h2></div>
+        <div class="feats">
+          <div class="feat"><h3>Bundles cost less per paper</h3><p>Unlock a whole subject, or every paper in a qualification, for far less than buying paper by paper.</p></div>
+          <div class="feat"><h3>Read online, on any device</h3><p>Papers open inside the portal on your phone, tablet or computer, tied to your account.</p></div>
+          <div class="feat"><h3>Your access stays with you</h3><p>Everything you buy is saved under My Papers, ready when you come back.</p></div>
+          <div class="feat"><h3>Secure card and mobile payments</h3><p>Payments are processed by the DPO gateway.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" style="padding-top:0">
+      <div class="wrap">
+        <div class="band">
+          <div><h2>Start with one paper.</h2><p>Create an account, pick your subject and be reading in minutes.</p></div>
+          <a class="btn light" [routerLink]="api.user() ? '/my-papers' : '/register'">{{ api.user() ? 'My Papers' : 'Create an account' }}</a>
+        </div>
+      </div>
+    </section>
+  `,
+})
+export class Home {
+  api = inject(Api);
+  quals = signal<any[]>([]);
+  loading = signal(true);
+  term = signal(''); results = signal<any[]>([]); searched = signal(false);
+  find(v: string) {
+    this.term.set(v); this.searched.set(false);
+    if (v.trim().length < 2) return this.results.set([]);
+    this.api.get('/catalog/search?q=' + encodeURIComponent(v.trim())).subscribe((r) => { if (this.term() === v) { this.results.set(r); this.searched.set(true); } });
+  }
+  constructor() {
+    this.api.get('/catalog/qualifications').subscribe((r) => { this.quals.set(r.qualifications); this.loading.set(false); });
+  }
+}
