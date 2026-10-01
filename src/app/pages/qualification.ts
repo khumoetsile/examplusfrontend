@@ -16,7 +16,7 @@ import { PriceTag } from '../ui';
         @if (d.bundle) {
           <div class="card promo blue">
             <div><b style="font-size:1.15rem">Unlock all {{ d.qualification.name }} papers</b><br>
-              <span class="muted">Every available paper across all subjects, best value.</span></div>
+              <span class="muted">Every available past paper across all subjects, best value.</span></div>
             <button class="btn" (click)="buy(d.bundle.id)">Buy for <app-price [price]="d.bundle.price" [regular]="d.bundle.regular_price" [onSale]="d.bundle.on_sale" [currency]="d.currency" /></button>
           </div>
         }

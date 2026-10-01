@@ -6,7 +6,7 @@ import { Api } from '../api';
 @Component({
   imports: [RouterLink, DatePipe, CurrencyPipe],
   template: `
-    <h1>My Papers</h1>
+    <h1>My past papers</h1>
     @if (data(); as d) {
       @if (!d.papers.length) { <div class="card">You have not purchased any papers yet. <a routerLink="/">Browse papers</a></div> }
       @if (d.products.length) {

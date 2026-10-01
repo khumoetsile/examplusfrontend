@@ -11,7 +11,7 @@ import { PriceTag } from '../ui';
         <div class="crumbs"><a routerLink="/">Exam papers</a> ›
           <a [routerLink]="['/qualification', d.subject.qualification_code]">{{ d.subject.qualification_name }}</a> › {{ d.subject.name }}</div>
         <h1>{{ d.subject.qualification_code }} {{ d.subject.name }}</h1>
-        <p>{{ d.papers.length }} papers available · read online in your account</p>
+        <p>{{ d.papers.length }} past papers for revision and practice · view online in your account</p>
       </div></div>
       <div class="wrap" style="padding:28px 20px 56px">
         @if (error()) { <div class="msg err">{{ error() }}</div> }
@@ -24,7 +24,7 @@ import { PriceTag } from '../ui';
             <button class="btn gold" (click)="buy(d.subjectBundle.id)">Unlock for <app-price [price]="d.subjectBundle.price" [regular]="d.subjectBundle.regular_price" [onSale]="d.subjectBundle.on_sale" [currency]="d.currency" /></button>
           </div>
         }
-        <h2>Available papers</h2>
+        <h2>Available past papers</h2>
         <div class="tablewrap"><table>
           <thead><tr><th>Year</th><th>Paper</th><th>Access</th><th></th></tr></thead>
           <tbody>

@@ -37,7 +37,7 @@ import { PriceTag } from '../ui';
           </div>
           <aside class="card" style="background:transparent">
             <h3>What you get</h3>
-            <p class="muted" style="margin-top:6px">Online access to this paper collection from your account, on any device. Papers are view-only and cannot be downloaded.</p>
+            <p class="muted" style="margin-top:6px">Online access to these past papers from your account, on any device, for revision and practice. Papers are view-only and cannot be downloaded.</p>
           </aside>
         </div>
       } @else if (missing()) { <div class="msg err">This item is not available for purchase.</div> }
