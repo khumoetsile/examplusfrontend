@@ -150,18 +150,36 @@ export class Catalog {
   imports: [FormsModule],
   template: `
     <h1>Settings</h1>
-    <div class="card" style="max-width:420px">
+    <div class="card" style="max-width:560px">
+      <h3>Access period</h3>
+      <p class="muted" style="margin-top:0">How long a learner keeps access after paying. This is a one-off payment: when the period ends the learner can simply buy again. Learners see the period next to every price.</p>
+      <label>Default access period for new products</label>
+      <select [(ngModel)]="days"><option value="">Lifetime (never expires)</option>
+        <option value="30">1 month</option><option value="90">3 months</option><option value="180">6 months</option>
+        <option value="365">12 months</option><option value="730">24 months</option></select>
+      <p style="margin-bottom:0"><button class="btn" (click)="saveDays()">Save default</button></p>
+      <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
+      <p class="muted" style="margin:0 0 8px">Apply this period to <b>every existing</b> product too. It only affects future purchases; people who already paid keep what they were promised.</p>
+      <button class="btn ghost" (click)="applyAll()">Apply to all existing products</button>
+    </div>
+    <div class="card" style="max-width:560px;margin-top:16px">
+      <h3>Currency</h3>
       <label>Currency code</label><input [(ngModel)]="currency" maxlength="3" placeholder="BWP" style="text-transform:uppercase">
       <p class="muted" style="font-size:.85rem">Shown on prices and sent to DPO at payment. Use a code your DPO account supports (e.g. BWP, USD).</p>
-      <button class="btn" (click)="save()">Save</button>
+      <button class="btn" (click)="saveCurrency()">Save currency</button>
     </div>
   `,
 })
 export class Settings {
   private api = inject(Api); private toast = inject(Toast);
-  currency = 'BWP';
-  constructor() { this.api.get('/admin/settings').subscribe((s) => (this.currency = s.currency)); }
-  save() { this.api.put('/admin/settings', { currency: this.currency }).subscribe({ next: () => this.toast.ok('Settings saved'), error: (e) => this.toast.fail(e) }); }
+  currency = 'BWP'; days = '';
+  constructor() { this.api.get('/admin/settings').subscribe((s) => { this.currency = s.currency; this.days = s.default_access_days || ''; }); }
+  saveCurrency() { this.api.put('/admin/settings', { currency: this.currency }).subscribe({ next: () => this.toast.ok('Currency saved'), error: (e) => this.toast.fail(e) }); }
+  saveDays() { this.api.put('/admin/settings', { default_access_days: this.days }).subscribe({ next: () => this.toast.ok('Default access period saved'), error: (e) => this.toast.fail(e) }); }
+  applyAll() {
+    if (!confirm('Set this access period on every product?')) return;
+    this.api.post('/admin/settings/apply-access', { days: this.days }).subscribe({ next: (r) => this.toast.ok(r.changed + ' products updated'), error: (e) => this.toast.fail(e) });
+  }
 }
 
 @Component({

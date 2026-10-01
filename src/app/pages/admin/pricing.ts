@@ -73,7 +73,10 @@ import { Toast, toLocalInput } from '../../ui';
         <div class="row"><div><label>Special starts</label><input type="datetime-local" [(ngModel)]="e._starts"></div>
           <div><label>Special ends</label><input type="datetime-local" [(ngModel)]="e._ends"></div></div>
         <label>Special label</label><input [(ngModel)]="e.sale_label" placeholder="e.g. Exam season special">
-        <label>Access length (days, blank = permanent)</label><input type="number" min="1" [(ngModel)]="e.access_days">
+        <label>How long learners keep access</label>
+        <div class="chips"><button type="button" class="chip" [class.on]="!e.access_days" (click)="e.access_days = null">Lifetime</button>
+          @for (o of presets; track o.d) { <button type="button" class="chip" [class.on]="e.access_days === o.d" (click)="e.access_days = o.d">{{ o.t }}</button> }</div>
+        <input type="number" min="1" [(ngModel)]="e.access_days" placeholder="or a number of days" style="margin-top:8px">
         <label class="chk"><input type="checkbox" [(ngModel)]="e.active"> Available to buy</label>
         <div class="row" style="margin-top:16px">
           <button class="btn ghost small" (click)="e.sale_price = null">Remove special</button>
@@ -90,6 +93,7 @@ export class Pricing {
   items = signal<any[]>([]); quals = signal<any[]>([]); subjects = signal<any[]>([]);
   type = signal(''); qual = signal(''); search = signal(''); onlyUnpriced = signal(false);
   editing = signal<any>(null);
+  presets = [{ d: 30, t: '1 month' }, { d: 90, t: '3 months' }, { d: 180, t: '6 months' }, { d: 365, t: '12 months' }, { d: 730, t: '24 months' }];
   sp: any = { scope: 'all', type: '', percent: null, starts: '', ends: '', label: '' };
 
   list = computed(() => {

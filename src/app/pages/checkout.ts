@@ -3,10 +3,10 @@ import { CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { Api } from '../api';
-import { PriceTag } from '../ui';
+import { AccessPipe, PriceTag } from '../ui';
 
 @Component({
-  imports: [FormsModule, CurrencyPipe, PriceTag, RouterLink],
+  imports: [FormsModule, CurrencyPipe, PriceTag, RouterLink, AccessPipe],
   template: `
     <div class="pagehead"><div class="wrap"><div class="crumbs"><a routerLink="/">Exam papers</a> › Checkout</div><h1>Checkout</h1></div></div>
     <div class="wrap" style="padding:28px 20px 56px">
@@ -37,6 +37,7 @@ import { PriceTag } from '../ui';
           </div>
           <aside class="card" style="background:transparent">
             <h3>What you get</h3>
+            @if (item(); as it) { <p style="margin:6px 0"><span class="badge">{{ it.access_days | access }}</span></p> }
             <p class="muted" style="margin-top:6px">Online access to these past papers from your account, on any device, for revision and practice. Papers are view-only and cannot be downloaded.</p>
           </aside>
         </div>

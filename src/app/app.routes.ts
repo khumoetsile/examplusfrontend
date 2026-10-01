@@ -11,6 +11,7 @@ const guard = (admin: boolean): CanActivateFn => async (_r, state) => {
 
 export const routes: Routes = [
   { path: '', title: 'Past Exam Papers | Elevate Skills', loadComponent: () => import('./pages/home').then((m) => m.Home) },
+  { path: 'search', title: 'Search past papers', loadComponent: () => import('./pages/search').then((m) => m.Search) },
   { path: 'qualification/:code', loadComponent: () => import('./pages/qualification').then((m) => m.Qualification) },
   { path: 'subject/:id', loadComponent: () => import('./pages/subject').then((m) => m.Subject) },
   { path: 'login', title: 'Sign in', loadComponent: () => import('./pages/auth').then((m) => m.Auth), data: { mode: 'login' } },

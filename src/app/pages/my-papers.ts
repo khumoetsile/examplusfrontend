@@ -10,7 +10,9 @@ import { Api } from '../api';
     @if (data(); as d) {
       @if (!d.papers.length) { <div class="card">You have not purchased any papers yet. <a routerLink="/">Browse papers</a></div> }
       @if (d.products.length) {
-        <p class="muted">Your access: @for (p of d.products; track p.id) { <span class="badge owned">{{ p.name }}</span> }</p>
+        <div class="card" style="margin-bottom:16px"><b>Your access</b>
+          @for (p of d.products; track p.id) { <div class="line"><span>{{ p.name }}</span><span class="muted">{{ p.expires_at ? 'Until ' + (p.expires_at | date: 'd MMM y') : 'Lifetime access' }}</span></div> }
+        </div>
       }
       @if (d.papers.length) {
         <div class="tablewrap"><table>

@@ -14,9 +14,8 @@ import { Api } from './api';
         </button>
         <nav [class.open]="menu()">
           <a routerLink="/" routerLinkActive="on" [routerLinkActiveOptions]="{ exact: true }">Home</a>
-          <a routerLink="/qualification/BGCSE" routerLinkActive="on">BGCSE</a>
-          <a routerLink="/qualification/JC" routerLinkActive="on">JC</a>
-          <a routerLink="/qualification/PSLE" routerLinkActive="on">PSLE</a>
+          @for (q of quals(); track q.id) { <a [routerLink]="['/qualification', q.code]" routerLinkActive="on">{{ q.code }}</a> }
+          <a routerLink="/search" routerLinkActive="on">Search</a>
           @if (api.user(); as u) {
             <a routerLink="/my-papers" routerLinkActive="on">My Papers</a>
             @if (api.isAdmin()) { <a routerLink="/admin" routerLinkActive="on">Admin</a> }
@@ -32,8 +31,8 @@ import { Api } from './api';
     <footer class="foot">
       <div class="wrap">
         <div class="cols">
-          <div><b>Elevate Skills · Exam Papers</b>Botswana's online library of past BGCSE, PSLE and JC examination papers, for revision and practice.</div>
-          <div><b>Explore</b><a routerLink="/qualification/BGCSE">BGCSE papers</a><a routerLink="/qualification/JC">JC papers</a><a routerLink="/qualification/PSLE">PSLE papers</a></div>
+          <div><b>Elevate Skills · Exam Papers</b>Botswana's online library of past IGCSE, BGCSE, JC and PSLE examination papers, for revision and practice.</div>
+          <div><b>Explore</b>@for (q of quals(); track q.id) { <a [routerLink]="['/qualification', q.code]">{{ q.code }} papers</a> }</div>
           <div><b>Account</b><a routerLink="/my-papers">My Papers</a><a routerLink="/login">Sign in</a><a href="https://elevateskills.online">elevateskills.online</a></div>
         </div>
         <div class="copy">© Elevate Skills. Past papers are for revision and practice only and are not a preview of future exams. They are available for online viewing only and may not be copied or redistributed. Payments secured by DPO.</div>
@@ -45,9 +44,11 @@ export class App {
   api = inject(Api);
   router = inject(Router);
   menu = signal(false);
-  plain = () => this.router.url === '/' || this.router.url.startsWith('/qualification') || this.router.url.startsWith('/subject');
+  quals = signal<any[]>([]);
+  plain = () => this.router.url === '/' || this.router.url.startsWith('/qualification') || this.router.url.startsWith('/subject') || this.router.url.startsWith('/search') || this.router.url.startsWith('/checkout');
 
   constructor() {
+    this.api.get('/catalog/qualifications').subscribe((r) => this.quals.set(r.qualifications));
     this.router.events.subscribe((e) => {
       if (e instanceof NavigationEnd) { window.scrollTo(0, 0); this.menu.set(false); }
     });

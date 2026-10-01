@@ -1,10 +1,10 @@
 import { Component, effect, inject, input, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { Api } from '../api';
-import { PriceTag } from '../ui';
+import { AccessPipe, PriceTag } from '../ui';
 
 @Component({
-  imports: [RouterLink, PriceTag],
+  imports: [RouterLink, PriceTag, AccessPipe],
   template: `
     @if (data(); as d) {
       <div class="pagehead"><div class="wrap">
@@ -16,7 +16,7 @@ import { PriceTag } from '../ui';
         @if (d.bundle) {
           <div class="card promo blue">
             <div><b style="font-size:1.15rem">Unlock all {{ d.qualification.name }} papers</b><br>
-              <span class="muted">Every available past paper across all subjects, best value.</span></div>
+              <span class="muted">Every available past paper across all subjects, best value. {{ d.bundle.access_days | access }}.</span></div>
             <button class="btn" (click)="buy(d.bundle.id)">Buy for <app-price [price]="d.bundle.price" [regular]="d.bundle.regular_price" [onSale]="d.bundle.on_sale" [currency]="d.currency" /></button>
           </div>
         }
