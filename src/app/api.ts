@@ -34,6 +34,7 @@ export class Api {
   del = <T = any>(url: string) => this.http.delete<T>('/api' + url);
   putForm = <T = any>(url: string, form: FormData) => this.http.put<T>('/api' + url, form);
   upload = <T = any>(url: string, form: FormData) => this.http.post<T>('/api' + url, form);
+  blobResp = (url: string) => this.http.get('/api' + url, { responseType: 'arraybuffer', observe: 'response' });
   blob = (url: string) => this.http.get('/api' + url, { responseType: 'arraybuffer' });
 
   login(email: string, password: string) {

@@ -101,27 +101,35 @@ export class CoverPreview {
   private async render(id: number) {
     this.loading.set(true); this.error.set('');
     try {
-      const buf: ArrayBuffer = await new Promise((res, rej) => this.api.blob(`/papers/${id}/cover`).subscribe({ next: res, error: rej }));
-      const pdfjs = await import('pdfjs-dist');
-      pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
-      const doc = await pdfjs.getDocument({ data: new Uint8Array(buf) }).promise;
-      const page = await doc.getPage(1);
+      const resp: any = await new Promise((res, rej) => this.api.blobResp(`/papers/${id}/cover`).subscribe({ next: res, error: rej }));
+      const buf: ArrayBuffer = resp.body;
       const host = this.stage().nativeElement;
       const width = Math.min(host.clientWidth || 560, 560);
-      const base = page.getViewport({ scale: 1 });
-      const vp = page.getViewport({ scale: (width / base.width) * (window.devicePixelRatio || 1) });
       const canvas = document.createElement('canvas');
-      canvas.width = vp.width; canvas.height = vp.height; canvas.style.width = `${width}px`;
       const ctx = canvas.getContext('2d')!;
-      await page.render({ canvasContext: ctx, viewport: vp, canvas }).promise;
-      ctx.save(); ctx.globalAlpha = 0.1; ctx.fillStyle = '#000'; ctx.font = `bold ${Math.round(vp.width / 9)}px sans-serif`; ctx.rotate(-Math.PI / 6);
-      for (let y = vp.height * 0.2; y < vp.height * 1.4; y += vp.width / 2.2) ctx.fillText('PREVIEW', vp.width * 0.05, y);
+      if ((resp.headers.get('content-type') || '').startsWith('image/')) {
+        const bmp = await createImageBitmap(new Blob([buf], { type: 'image/jpeg' }));
+        canvas.width = bmp.width; canvas.height = bmp.height; canvas.style.width = `${width}px`;
+        ctx.drawImage(bmp, 0, 0); bmp.close();
+      } else {
+        const pdfjs = await import('pdfjs-dist');
+        pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
+        const doc = await pdfjs.getDocument({ data: new Uint8Array(buf) }).promise;
+        const page = await doc.getPage(1);
+        const base = page.getViewport({ scale: 1 });
+        const vp = page.getViewport({ scale: (width / base.width) * (window.devicePixelRatio || 1) });
+        canvas.width = vp.width; canvas.height = vp.height; canvas.style.width = `${width}px`;
+        await page.render({ canvasContext: ctx, viewport: vp, canvas }).promise;
+        (doc as any).destroy?.();
+      }
+      const w = canvas.width, h = canvas.height;
+      ctx.save(); ctx.globalAlpha = 0.1; ctx.fillStyle = '#000'; ctx.font = `bold ${Math.round(w / 9)}px sans-serif`; ctx.rotate(-Math.PI / 6);
+      for (let y = h * 0.2; y < h * 1.4; y += w / 2.2) ctx.fillText('PREVIEW', w * 0.05, y);
       ctx.restore();
       host.querySelectorAll('canvas').forEach((c) => c.remove());
       host.appendChild(canvas);
-      (doc as any).destroy?.();
     } catch (e: any) {
-      this.error.set(e?.error?.error || 'A preview is not available for this paper.');
+      this.error.set('A preview is not available for this paper.');
     }
     this.loading.set(false);
   }

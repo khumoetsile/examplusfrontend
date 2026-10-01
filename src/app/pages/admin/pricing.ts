@@ -36,6 +36,27 @@ import { Toast, toLocalInput } from '../../ui';
         <button class="btn ghost" (click)="clearAll()" style="margin-left:8px">End all specials now</button></p>
     </div>
 
+    <div class="card" style="margin-top:16px">
+      <h3>Change access period in bulk</h3>
+      <p class="muted" style="margin-top:0">Choose how long learners keep access for a whole group of products. Only affects purchases made after the change; people who already paid keep what they were promised.</p>
+      <div class="row">
+        <div><label>Applies to</label>
+          <select [(ngModel)]="ac.scope" (ngModelChange)="ac.scope_id = null">
+            <option value="all">Everything</option><option value="qualification">One qualification</option><option value="subject">One subject</option></select></div>
+        @if (ac.scope === 'qualification') {
+          <div><label>Qualification</label><select [(ngModel)]="ac.scope_id">@for (q of quals(); track q.id) { <option [ngValue]="q.id">{{ q.code }}</option> }</select></div>
+        }
+        @if (ac.scope === 'subject') {
+          <div><label>Subject</label><select [(ngModel)]="ac.scope_id">@for (s of subjects(); track s.id) { <option [ngValue]="s.id">{{ s.qualification_code }} – {{ s.name }}</option> }</select></div>
+        }
+        <div><label>Which products</label>
+          <select [(ngModel)]="ac.type"><option value="">All types</option><option value="paper">Single papers</option><option value="subject">Subject bundles</option><option value="qualification">Qualification bundles</option></select></div>
+        <div><label>Access period</label>
+          <select [(ngModel)]="ac.days"><option [ngValue]="null">Lifetime</option>@for (o of presets; track o.d) { <option [ngValue]="o.d">{{ o.t }}</option> }</select></div>
+        <button class="btn" (click)="applyAccess()">Apply</button>
+      </div>
+    </div>
+
     <div class="toolbar">
       <select [ngModel]="type()" (ngModelChange)="type.set($event)">
         <option value="">All products</option><option value="qualification">Qualification bundles</option><option value="subject">Subject bundles</option><option value="paper">Single papers</option></select>
@@ -46,7 +67,7 @@ import { Toast, toLocalInput } from '../../ui';
     </div>
 
     <div class="tablewrap"><table>
-      <thead><tr><th>Product</th><th style="width:120px">Regular price</th><th style="width:120px">Special price</th><th>Special ends</th><th>Status</th><th></th></tr></thead>
+      <thead><tr><th>Product</th><th style="width:120px">Regular price</th><th style="width:120px">Special price</th><th>Special ends</th><th style="width:150px">Access period</th><th>Status</th><th></th></tr></thead>
       <tbody>
         @for (p of list(); track p.id) {
           <tr>
@@ -54,6 +75,11 @@ import { Toast, toLocalInput } from '../../ui';
             <td><input type="number" min="0" step="0.01" [(ngModel)]="p.price" (ngModelChange)="p._dirty = true"></td>
             <td><input type="number" min="0" step="0.01" [(ngModel)]="p.sale_price" (ngModelChange)="p._dirty = true" placeholder="—"></td>
             <td>@if (p.sale_price !== null && p.sale_price !== '') { {{ p.sale_ends ? (p.sale_ends | date: 'd MMM y, HH:mm') : 'No end date' }} } @else { <span class="muted">—</span> }</td>
+            <td><select [(ngModel)]="p.access_days" (ngModelChange)="p._dirty = true" aria-label="Access period">
+              <option [ngValue]="null">Lifetime</option>
+              @for (o of presets; track o.d) { <option [ngValue]="o.d">{{ o.t }}</option> }
+              @if (p.access_days && !isPreset(p.access_days)) { <option [ngValue]="p.access_days">{{ p.access_days }} days</option> }
+            </select></td>
             <td>@if (!(p.price > 0)) { <span class="badge pending">Not for sale</span> } @else if (p.on_sale) { <span class="badge sale">On special</span> } @else if (p.sale_price !== null && p.sale_price !== '') { <span class="badge">Scheduled</span> } @else { <span class="badge owned">Regular</span> }
               @if (!p.active) { <span class="badge revoked">Hidden</span> }</td>
             <td style="text-align:right;white-space:nowrap">
@@ -61,7 +87,7 @@ import { Toast, toLocalInput } from '../../ui';
               <button class="btn small ghost" (click)="more(p)">More</button>
             </td>
           </tr>
-        } @empty { <tr><td colspan="6" class="muted">Nothing matches these filters.</td></tr> }
+        } @empty { <tr><td colspan="7" class="muted">Nothing matches these filters.</td></tr> }
       </tbody>
     </table></div>
 
@@ -94,6 +120,8 @@ export class Pricing {
   type = signal(''); qual = signal(''); search = signal(''); onlyUnpriced = signal(false);
   editing = signal<any>(null);
   presets = [{ d: 30, t: '1 month' }, { d: 90, t: '3 months' }, { d: 180, t: '6 months' }, { d: 365, t: '12 months' }, { d: 730, t: '24 months' }];
+  ac: any = { scope: 'all', type: '', days: 365, scope_id: null };
+  isPreset = (d: number) => this.presets.some((p) => p.d === d);
   sp: any = { scope: 'all', type: '', percent: null, starts: '', ends: '', label: '' };
 
   list = computed(() => {
@@ -126,6 +154,13 @@ export class Pricing {
   saveMore(e: any) {
     this.api.put(`/admin/products/${e.id}`, this.body(e, { sale_starts: e._starts || null, sale_ends: e._ends || null })).subscribe({
       next: () => { this.editing.set(null); this.toast.ok('Saved'); this.load(); }, error: (x) => this.toast.fail(x),
+    });
+  }
+  applyAccess() {
+    const a = this.ac;
+    if (a.scope !== 'all' && !a.scope_id) return this.toast.show('Choose where this applies.', true);
+    this.api.post('/admin/access-bulk', a).subscribe({
+      next: (r) => { this.toast.ok(`Access period updated on ${r.changed} products`); this.load(); }, error: (e) => this.toast.fail(e),
     });
   }
   applySpecial() {

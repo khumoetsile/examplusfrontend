@@ -84,7 +84,12 @@ interface Pending { file: File; type: string; state: 'ready' | 'uploading' | 'do
         <select [(ngModel)]="e.subject_id">@for (s of allSubjects(); track s.id) { <option [ngValue]="s.id">{{ s.qualification_code }} – {{ s.name }}</option> }</select>
         <div class="row"><div><label>Exam year</label><input type="number" [(ngModel)]="e.exam_year"></div>
           <div><label>Paper name</label><input [(ngModel)]="e.paper_type"></div></div>
-        <label>Regular price</label><input type="number" min="0" step="0.01" [(ngModel)]="e.price">
+        <div class="row"><div><label>Regular price</label><input type="number" min="0" step="0.01" [(ngModel)]="e.price"></div>
+          <div><label>Access period</label><select [(ngModel)]="e.access_days">
+            <option [ngValue]="null">Lifetime</option><option [ngValue]="30">1 month</option><option [ngValue]="90">3 months</option>
+            <option [ngValue]="180">6 months</option><option [ngValue]="365">12 months</option><option [ngValue]="730">24 months</option>
+            @if (e.access_days && ![30, 90, 180, 365, 730].includes(e.access_days)) { <option [ngValue]="e.access_days">{{ e.access_days }} days</option> }
+          </select></div></div>
         <label>Replace the PDF (optional)</label><input type="file" accept="application/pdf" (change)="replace = $any($event.target).files[0]">
         <label><input type="checkbox" [(ngModel)]="e.active"> Visible to learners</label>
         <div class="row" style="margin-top:16px">
@@ -157,7 +162,7 @@ export class Papers {
     this.api.putForm(`/admin/papers/${e.id}`, f).subscribe({
       next: () => {
         const done = () => { this.busy.set(false); this.editing.set(null); this.toast.ok('Paper saved'); this.reload(); };
-        if (e.product_id) this.api.put(`/admin/products/${e.product_id}/price`, { price: e.price ?? 0 }).subscribe({ next: done, error: (x) => { this.busy.set(false); this.toast.fail(x); } });
+        if (e.product_id) this.api.put(`/admin/products/${e.product_id}/price`, { price: e.price ?? 0, access_days: e.access_days ?? null }).subscribe({ next: done, error: (x) => { this.busy.set(false); this.toast.fail(x); } });
         else done();
       },
       error: (x) => { this.busy.set(false); this.toast.fail(x); },
